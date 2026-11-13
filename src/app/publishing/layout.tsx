@@ -1,7 +1,10 @@
+import { connection } from "next/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/auth-session";
+
 export default async function PublishingLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   const jar = await cookies();
   const session = verifySession(jar.get("nexus_session")?.value);
   if (!session) redirect("/login");
