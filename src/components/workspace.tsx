@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
   investigations as seedCases,
   sources as seedSources,
@@ -28,7 +28,7 @@ const seed = {
 const today = () => new Date().toISOString().slice(0, 10);
 const makeId = (prefix: string) => prefix + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
 
-function Panel({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+function Panel({ title, children, action }: { title: string; children: ReactNode; action?: React.ReactNode }) {
   return <section className="rounded-xl border border-slate-800 bg-slate-900/75 shadow-lg shadow-black/10">
     <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
       <h3 className="text-sm font-semibold tracking-wide text-slate-100">{title}</h3>{action}
@@ -87,7 +87,7 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
   const approved = data.responses.filter((item: any) => ["Approved", "approved"].includes(item.status)).length;
   const topics = Array.from(new Set(data.claims.map((item: any) => item.topic || "Uncategorised")));
 
-  function addCase(event: React.FormEvent) {
+  function addCase(event: FormEvent) {
     event.preventDefault();
     if (!caseTitle.trim()) return;
     const item = { id: makeId("INV"), title: caseTitle.trim(), description: caseDescription.trim(), priority: casePriority, status: "Open", assignedAnalyst: "Demo analyst", createdAt: today(), updatedAt: today(), linkedClaims: [], linkedSources: [], linkedMedia: [], notes: "Created in local demo workspace." };
