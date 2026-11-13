@@ -18,6 +18,7 @@ import {
   Sparkles,
   TrendingUp,
   UserCircle2,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
