@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/auth-session";
 
 export default async function ProfilePage() {
+  await connection();
   const cookieStore = await cookies();
   const user = verifySession(cookieStore.get("nexus_session")?.value);
   if (!user) redirect("/login");
