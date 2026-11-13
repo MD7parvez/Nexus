@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   AlertTriangle,
   Bell,
@@ -133,6 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
+          <nav aria-label="Main navigation" className="flex gap-2 overflow-x-auto border-b border-slate-800 px-4 py-3 lg:hidden">{navItems.map(({href,label}) => <Link key={href} href={href} className={cn("shrink-0 rounded-lg px-3 py-2 text-xs", pathname===href ? "bg-slate-800 text-cyan-200" : "bg-slate-900 text-slate-300")}>{label}</Link>)}</nav>
           <main className="p-4 md:p-6">
             <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
