@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
-  Bell,
   BriefcaseBusiness,
   ChevronRight,
   FileText,
@@ -21,7 +20,6 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/overview", label: "Overview", icon: LayoutDashboard },
