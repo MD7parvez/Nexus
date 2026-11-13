@@ -46,8 +46,8 @@ const buttonClass = "rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 t
 const primaryClass = "rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/25";
 const badgeClass = "inline-flex rounded-full border border-slate-700 bg-slate-800 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-300";
 
-export function Workspace() {
-  const [tab, setTab] = useState<Tab>("Overview");
+export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [data, setData] = useState<any>(seed);
   const [ready, setReady] = useState(false);
   const [search, setSearch] = useState("");
