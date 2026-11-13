@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-slate-950 text-slate-100">
-        <AppShell>{children}</AppShell>
+        <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>\n          <AppShell>{children}</AppShell>\n        </Suspense>
       </body>
     </html>
   );
