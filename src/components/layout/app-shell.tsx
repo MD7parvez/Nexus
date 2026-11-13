@@ -30,6 +30,7 @@ const navItems = [
   { href: "/countermeasures", label: "Countermeasures", icon: FileText },
   { href: "/simulation-lab", label: "Simulation Lab", icon: Sparkles },
   { href: "/reports", label: "Reports", icon: BriefcaseBusiness },
+  { href: "/publishing", label: "Research Publishing", icon: FileText },
   { href: "/case-management", label: "Case Management", icon: FolderKanban },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
