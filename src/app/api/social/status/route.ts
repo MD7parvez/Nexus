@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSocialConfig, validPublicProfileUrl } from "@/lib/social/config";
-export const runtime = "nodejs";
 export async function GET() {
   const c = getSocialConfig();
   return NextResponse.json({
