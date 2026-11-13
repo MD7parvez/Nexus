@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Bell,
@@ -42,6 +42,7 @@ const breadcrumbs = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   if (pathname === "/login" || pathname === "/register") {
     return <>{children}</>;
