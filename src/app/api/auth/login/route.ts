@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAppMode } from "@/lib/app-config";
 import { getSupabaseAnonClient } from "@/lib/supabase";
 import { validateUser } from "@/lib/user-store";
+import { signSession } from "@/lib/auth-session";
 
 function isConfiguredAdmin(email: string) {
   const allowlist = (process.env.NEXUS_ADMIN_EMAILS ?? "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
@@ -34,8 +35,11 @@ export async function POST(request: Request) {
     if (isConfiguredAdmin(user.email)) user.role = "admin";
   }
 
+  let sessionToken: string;
+  try { sessionToken = signSession(user); }
+  catch { return NextResponse.json({ ok: false, error: "Secure sessions are not configured. The administrator must set NEXUS_SESSION_SECRET." }, { status: 503 }); }
   const response = NextResponse.json({ ok: true, user, mode: getAppMode() });
-  response.cookies.set("nexus_session", JSON.stringify(user), {
+  response.cookies.set("nexus_session", sessionToken, {
     httpOnly: true, secure: process.env.NODE_ENV === "production",
     sameSite: "lax", path: "/", maxAge: 60 * 60 * 8,
   });
