@@ -1,60 +1,58 @@
 # NEXUS — Information Integrity & Intelligence System
 
-NEXUS is a working intelligence workstation for investigations, evidence tracking, narrative analysis, media review, defensive response workflows, and scenario research in a government-oriented workflow.
+NEXUS is a defensive information-integrity prototype for organizing investigations, recording public sources and claims, reviewing media metadata, drafting evidence-based corrections, and testing analyst workflows with fictional scenarios.
 
-## What is active now
+## Current deployment
 
-- Real Supabase-ready authentication and database mode
-- Dashboard data read from a backend API instead of static page imports
-- Structured schema for investigations, claims, sources, narratives, media, countermeasures, and audit logs
-- Free-tier deployment path via Vercel + Supabase
-- Demo fallback mode only when cloud credentials are not configured
+- Repository: MD7parvez/Nexus
+- Hosting: Render web service (free tier)
+- Runtime: Next.js 16, React 19, TypeScript
+- UI: Tailwind CSS and Lucide
+- Prototype records: browser localStorage
 
-## Stack
+## What currently works
 
-- Next.js with TypeScript
-- Tailwind CSS
-- Supabase Auth + Postgres
-- Vercel-ready deployment config
-- Recharts for charts
-- Lucide icons
+- Overview metrics derived from the local workspace records
+- Create and update investigation records and statuses
+- Add public-source records
+- Record claims and manually classify their review status
+- Group claims by analyst-entered topic
+- Select an image, audio or video file and compute its SHA-256 fingerprint locally in the browser
+- Draft defensive corrections and move them through internal review and approval states
+- Create clearly labelled fictional simulation scenarios
+- Export a text report from the current workspace
 
-## Local setup
+## Important prototype limitations
 
-1. Install Node.js LTS.
-2. In the project root, install dependencies:
-   npm install
-3. Copy the environment template:
-   copy .env.example .env.local
-4. Update the Supabase values in .env.local.
-5. Start the app:
-   npm run dev
-6. Visit http://localhost:3000
+This is a public demonstration build, not a production intelligence system.
 
-## Real functionality
+- Records are stored in the current browser's localStorage. They do not sync across devices or users and can be lost if browser storage is cleared.
+- Production authentication, organization isolation, server-side persistence and production access controls are not enabled.
+- No social-media scraping, account creation, posting, covert influence or live platform integration is enabled.
+- The media page records file metadata and a SHA-256 hash. The file itself is not uploaded and no deepfake detector runs.
+- Narrative grouping is based on analyst-entered topics; it is not an automated attribution or truth assessment.
+- Simulation scenarios are fictional and stay inside the workspace.
+- Do not enter classified, private, personal or otherwise sensitive information.
 
-The app properly detects Supabase configuration and switches from demo mode to live backend mode automatically. The overview and case-management endpoints read from the API layer, which can query Supabase tables when cloud credentials are present.
+## Local development
 
-## Supabase setup
+1. Install Node.js 20 or later.
+2. Run `npm install`.
+3. Run `npm run dev`.
+4. Open `http://localhost:3000`.
 
-1. Create a Supabase project.
-2. Copy the project URL and anon key to .env.local.
-3. Create the schema in supabase/schema.sql.
-4. Enable Row Level Security and add policies for organization-scoped access.
-5. Keep service-role keys server-side only.
+## Render deployment
 
-## Free cloud deployment
+The Render service is connected to the `main` branch. New commits trigger an automatic deployment.
 
-Use this path for free-tier hosting:
+Build command: `npm install && npm run build`
 
-- Frontend: Vercel (free)
-- Database/auth: Supabase (free)
-- Set environment variables in Vercel using the values from your Supabase project.
-- Import the schema from supabase/schema.sql before first login.
+Start command: `npm run start -- --port $PORT`
 
-## Security notes
+Health endpoint: `/api/health`
 
-- Never expose service-role keys in browser code.
-- Keep demo data separated from production data.
-- Require human approval before publishing countermeasures.
-- AI and media-analysis outputs must remain clearly labeled and never treated as definitive forensic proof.
+The free service may sleep when idle. Browser-local records are not a backup and are not shared with the server.
+
+## Production roadmap
+
+Before real organizational use, replace browser-local state with a properly configured database, implement real authentication and role-based authorization, enforce organization-scoped access policies, add server-side audit logging and retention controls, complete security testing, and obtain legal/privacy review. Integrations must use approved APIs and authorized organizational accounts. Countermeasure publication must remain behind human approval.
