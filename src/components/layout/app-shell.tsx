@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm">
             <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6">
               <div className="flex items-center gap-3">
-                <Button variant="secondary" size="sm" className="lg:hidden">Menu</Button>
+                
                 <div className="hidden items-center gap-2 text-sm text-slate-400 md:flex">
                   {breadcrumbs.map((item, index) => (
                     <div key={item.label} className="flex items-center gap-2">
