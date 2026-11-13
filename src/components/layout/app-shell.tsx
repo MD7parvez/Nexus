@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Bell,
@@ -35,6 +35,7 @@ const navItems = [
   { href: "/publishing", label: "Research Publishing", icon: FileText },
   { href: "/case-management", label: "Case Management", icon: FolderKanban },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/profile", label: "My Profile", icon: UserCircle2 },
   { href: "/help", label: "Help & guide", icon: HelpCircle },
 ];
 
@@ -46,10 +47,29 @@ const breadcrumbs = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  useEffect(() => {
+    if (pathname === "/login" || pathname === "/register" || pathname === "/prototype-owner") { setAuthLoading(false); return; }
+    let active = true;
+    fetch("/api/auth/me", { cache: "no-store" }).then(async (response) => {
+      if (!response.ok) { router.replace("/login"); return; }
+      const data = await response.json();
+      if (active) setUser(data.user);
+    }).catch(() => router.replace("/login")).finally(() => { if (active) setAuthLoading(false); });
+    return () => { active = false; };
+  }, [pathname, router]);
+  async function signOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/login");
+    router.refresh();
+  }
 
   if (pathname === "/login" || pathname === "/register" || pathname === "/prototype-owner") {
     return <>{children}</>;
   }
+
+  if (authLoading || !user) return <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-400">Loading NEXUS workspace…</div>;
 
   const currentPage = navItems.find((item) => item.href === pathname) ?? navItems[0];
 
@@ -121,17 +141,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     placeholder="Global search, case ID, claim, source"
                   />
                 </div>
-                <button className="rounded-lg border border-slate-800 bg-slate-900 p-2 text-slate-300 hover:text-slate-100">
-                  <Bell size={16} />
-                </button>
-                <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900 px-2 py-1.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/15 text-xs font-semibold text-cyan-200">AC</div>
+                <Link href="/profile" className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900 px-2 py-1.5 hover:border-cyan-500/40">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/15 text-xs font-semibold text-cyan-200">{(user.name || user.email).slice(0, 2).toUpperCase()}</div>
                   <div className="hidden text-left md:block">
-                    <div className="text-sm font-medium text-slate-100">Alicia Chen</div>
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Analyst</div>
+                    <div className="max-w-36 truncate text-sm font-medium text-slate-100">{user.name}</div>
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">{user.role}</div>
                   </div>
-                  <UserCircle2 size={16} className="text-slate-400" />
-                </div>
+                </Link>
+                <button type="button" onClick={signOut} className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-300 hover:border-rose-500/40 hover:text-rose-200">Sign out</button>
               </div>
             </div>
           </header>
@@ -143,9 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs uppercase tracking-[0.25em] text-cyan-300">{currentPage.label}</p>
                 <h2 className="mt-1 text-2xl font-semibold text-slate-50">NEXUS intelligence workstation</h2>
               </div>
-              <Button variant="default" size="sm">
-                Create investigation
-              </Button>
+              <Link href="/case-management" className="inline-flex items-center justify-center rounded-md bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">Open case management</Link>
             </div>
 
             {children}
