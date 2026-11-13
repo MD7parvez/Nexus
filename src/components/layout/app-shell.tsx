@@ -34,6 +34,7 @@ const navItems = [
   { href: "/publishing", label: "Research Publishing", icon: FileText },
   { href: "/case-management", label: "Case Management", icon: FolderKanban },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/help", label: "Help & guide", icon: HelpCircle },
 ];
 
 const breadcrumbs = [
