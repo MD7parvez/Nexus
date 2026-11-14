@@ -1,29 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import {
-  investigations as seedCases,
-  sources as seedSources,
-  claims as seedClaims,
-  narratives as seedNarratives,
-  mediaAssets as seedMedia,
-  countermeasures as seedResponses,
-  simulationScenarios as seedScenarios,
-} from "@/lib/demo-data";
 
 type Tab = "Overview" | "Investigations" | "Sources" | "Claims & narratives" | "Media review" | "Countermeasures" | "Simulation lab" | "Reports";
 
 const tabs: Tab[] = ["Overview", "Investigations", "Sources", "Claims & narratives", "Media review", "Countermeasures", "Simulation lab", "Reports"];
 
-const seed = {
-  cases: seedCases as any[],
-  sources: seedSources as any[],
-  claims: seedClaims as any[],
-  narratives: seedNarratives as any[],
-  media: seedMedia as any[],
-  responses: seedResponses as any[],
-  scenarios: seedScenarios as any[],
-};
+const emptyData = { cases: [] as any[], sources: [] as any[], claims: [] as any[], media: [] as any[], responses: [] as any[], scenarios: [] as any[] };
 
 const today = () => new Date().toISOString().slice(0, 10);
 const makeId = (prefix: string) => prefix + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
@@ -48,7 +31,7 @@ const badgeClass = "inline-flex rounded-full border border-slate-700 bg-slate-80
 
 export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
   const [tab, setTab] = useState<Tab>(initialTab);
-  const [data, setData] = useState<any>(seed);
+  const [data, setData] = useState<any>(emptyData);
   const [ready, setReady] = useState(false);
   const [search, setSearch] = useState("");
   const [caseTitle, setCaseTitle] = useState("");
@@ -65,20 +48,32 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("nexus-workspace-v1");
-      if (saved) setData(JSON.parse(saved));
-    } catch {
-      setNotice("Local demo data could not be loaded; using sample records.");
-    }
-    setReady(true);
+    let active = true;
+    fetch("/api/workspace", { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Database connection is not ready.");
+        if (active) setData({ ...emptyData, ...(result.data || {}) });
+      })
+      .catch((error) => { if (active) setNotice(error instanceof Error ? error.message : "Unable to load account records."); })
+      .finally(() => { if (active) setReady(true); });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    if (ready) {
-      try { localStorage.setItem("nexus-workspace-v1", JSON.stringify(data)); }
-      catch { setNotice("Browser storage is full. Export your report and clear old demo records."); }
-    }
+    if (!ready) return;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      fetch("/api/workspace", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data }), signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            setNotice(result.error || "Changes are not saved to the database.");
+          }
+        })
+        .catch((error) => { if (error.name !== "AbortError") setNotice("Database save failed. Check the Supabase setup before leaving this page."); });
+    }, 500);
+    return () => { window.clearTimeout(timeout); controller.abort(); };
   }, [data, ready]);
 
   const filteredCases = useMemo(() => data.cases.filter((item: any) => (item.title + " " + item.id + " " + item.status).toLowerCase().includes(search.toLowerCase())), [data.cases, search]);
@@ -90,9 +85,9 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
   function addCase(event: FormEvent) {
     event.preventDefault();
     if (!caseTitle.trim()) return;
-    const item = { id: makeId("INV"), title: caseTitle.trim(), description: caseDescription.trim(), priority: casePriority, status: "Open", assignedAnalyst: "Demo analyst", createdAt: today(), updatedAt: today(), linkedClaims: [], linkedSources: [], linkedMedia: [], notes: "Created in local demo workspace." };
+    const item = { id: makeId("INV"), title: caseTitle.trim(), description: caseDescription.trim(), priority: casePriority, status: "Open", assignedAnalyst: "Unassigned", createdAt: today(), updatedAt: today(), linkedClaims: [], linkedSources: [], linkedMedia: [], notes: "Created by the signed-in workspace user." };
     setData((old: any) => ({ ...old, cases: [item, ...old.cases] }));
-    setCaseTitle(""); setCaseDescription(""); setCasePriority("Medium"); setNotice("Investigation created in this browser."); setTab("Investigations");
+    setCaseTitle(""); setCaseDescription(""); setCasePriority("Medium"); setNotice("Investigation created; saving to your account database."); setTab("Investigations");
   }
 
   function addSource(event: React.FormEvent) {
@@ -135,9 +130,9 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
     const bytes = await file.arrayBuffer();
     const digest = await crypto.subtle.digest("SHA-256", bytes);
     const hash = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
-    const item = { id: makeId("MED"), filename: file.name, type: kind, size: file.size, hash, status: "Demo metadata review", confidence: null, createdAt: new Date().toISOString(), analysis: "Metadata and hash only. No deepfake detector was run." };
+    const item = { id: makeId("MED"), filename: file.name, type: kind, size: file.size, hash, status: "Metadata fingerprinted", confidence: null, createdAt: new Date().toISOString(), analysis: "Metadata and hash only. No deepfake detector was run." };
     setData((old: any) => ({ ...old, media: [item, ...old.media] }));
-    setNotice("File fingerprint calculated in your browser. The file itself was not uploaded.");
+    setNotice("File fingerprint calculated locally; record is being saved to your account database. The file itself was not uploaded.");
   }
 
   function updateResponse(id: string, status: string) {
@@ -149,7 +144,7 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
     return [
       "NEXUS — INFORMATION INTEGRITY REVIEW",
       "Generated: " + new Date().toLocaleString(),
-      "REPORT STATUS: DEMO / ANALYST-ENTERED DATA",
+      "REPORT STATUS: ACCOUNT RECORDS / ANALYST-ENTERED DATA",
       "",
       "EXECUTIVE SUMMARY",
       "Investigations: " + data.cases.length + " total; " + openCases + " open",
@@ -178,7 +173,7 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
       ...data.scenarios.map((x: any) => [x.id, x.title, x.status, x.label || "SYNTHETIC SCENARIO"].join(" | ")),
       "",
       "LIMITATIONS",
-      "This export reflects records currently stored in this browser. It may include sample records and analyst-entered material. No automated truth assessment, deepfake verdict, or independent source verification is implied. Hashes and metadata alone do not establish authenticity. Internal approval does not mean a public statement was published.",
+      "This export reflects records currently stored for the signed-in account. Records are analyst-entered unless otherwise stated. No automated truth assessment, deepfake verdict, or independent source verification is implied. Hashes and metadata alone do not establish authenticity. Internal approval does not mean a public statement was published.",
     ].join("\n");
   }
 
@@ -203,10 +198,12 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
     setNotice("Printable report opened. Choose Save as PDF in the print dialog.");
   }
 
+  if (!ready) return <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-sm text-slate-300">Loading your account records…</div>;
+
   return <div className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3">
-      <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Demo workspace · local browser storage</p><p className="mt-1 text-xs text-slate-400">Use fictional or non-sensitive public information only. No secure multi-user storage or live platform connections are enabled.</p></div>
-      <span className={badgeClass}>Prototype</span>
+      <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Account workspace · database storage</p><p className="mt-1 text-xs text-slate-400">Records are private to the signed-in account. Use authorized public information and follow your organization’s data-handling rules.</p></div>
+      <span className={badgeClass}>Account data</span>
     </div>
 
     <div className="flex flex-wrap gap-2">
