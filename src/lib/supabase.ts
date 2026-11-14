@@ -55,3 +55,8 @@ export function getSupabaseServerClient() {
     },
   });
 }
+
+export function getSupabaseAdminClient() {
+  if (!url || !serviceRoleKey) return null;
+  return createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+}
