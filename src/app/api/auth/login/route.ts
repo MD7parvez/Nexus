@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   let sessionToken: string;
   try { sessionToken = signSession(user); }
   catch { return NextResponse.json({ ok: false, error: "Secure sessions are not configured. The administrator must set NEXUS_SESSION_SECRET." }, { status: 503 }); }
-  const response = NextResponse.json({ ok: true, user, mode: getAppMode() });
+  const response = NextResponse.json({ ok: true, user, mode: "supabase" });
   response.cookies.set("nexus_session", sessionToken, {
     httpOnly: true, secure: process.env.NODE_ENV === "production",
     sameSite: "lax", path: "/", maxAge: 60 * 60 * 8,
