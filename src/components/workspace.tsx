@@ -145,12 +145,62 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
     setNotice("Response status updated. No external post was made.");
   }
 
+  function buildReportText() {
+    return [
+      "NEXUS — INFORMATION INTEGRITY REVIEW",
+      "Generated: " + new Date().toLocaleString(),
+      "REPORT STATUS: DEMO / ANALYST-ENTERED DATA",
+      "",
+      "EXECUTIVE SUMMARY",
+      "Investigations: " + data.cases.length + " total; " + openCases + " open",
+      "Sources: " + data.sources.length,
+      "Claims: " + data.claims.length + "; " + underReview + " not marked verified",
+      "Media records: " + data.media.length,
+      "Defensive response drafts: " + data.responses.length + "; " + approved + " approved internally",
+      "Fictional scenarios: " + data.scenarios.length,
+      "",
+      "INVESTIGATIONS",
+      ...data.cases.map((x: any) => [x.id, x.title, x.status, x.priority, x.createdAt, x.description].join(" | ")),
+      "",
+      "SOURCE REGISTER",
+      ...data.sources.map((x: any) => [x.id, x.name, x.type, x.reliability || "Unassessed", x.url || "", x.provenance || ""].join(" | ")),
+      "",
+      "CLAIM REGISTER",
+      ...data.claims.map((x: any) => [x.id, x.status, x.topic, x.text, x.summary || ""].join(" | ")),
+      "",
+      "MEDIA REVIEW",
+      ...data.media.map((x: any) => [x.id, x.filename, x.type, x.hash || x.sha256 || "", x.analysis || ""].join(" | ")),
+      "",
+      "DEFENSIVE RESPONSE REGISTER",
+      ...data.responses.map((x: any) => [x.id, x.title, x.status, x.body || ""].join(" | ")),
+      "",
+      "FICTIONAL SIMULATION REGISTER",
+      ...data.scenarios.map((x: any) => [x.id, x.title, x.status, x.label || "SYNTHETIC SCENARIO"].join(" | ")),
+      "",
+      "LIMITATIONS",
+      "This export reflects records currently stored in this browser. It may include sample records and analyst-entered material. No automated truth assessment, deepfake verdict, or independent source verification is implied. Hashes and metadata alone do not establish authenticity. Internal approval does not mean a public statement was published.",
+    ].join("\n");
+  }
+
   function exportReport() {
-    const report = ["NEXUS — Information Integrity Review", "Generated: " + new Date().toLocaleString(), "", "DEMO WORKSPACE — sample and browser-local records only.", "", "INVESTIGATIONS", ...data.cases.map((x: any) => x.id + " | " + x.title + " | " + x.status + " | " + x.priority), "", "CLAIMS", ...data.claims.map((x: any) => x.id + " | " + x.status + " | " + x.text), "", "SOURCES", ...data.sources.map((x: any) => x.id + " | " + x.name + " | " + x.type + " | " + x.url), "", "COUNTERMEASURES", ...data.responses.map((x: any) => x.id + " | " + x.title + " | " + x.status), "", "Limitations: this report contains demo records and analyst-entered material. It is not a verified intelligence assessment."].join("\n");
-    const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([buildReportText()], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a"); link.href = url; link.download = "nexus-review-" + today() + ".txt"; link.click(); URL.revokeObjectURL(url);
-    setNotice("Report exported as a text file.");
+    setNotice("Full report exported as a text file.");
+  }
+
+  function printReport() {
+    const escapeHtml = (value: unknown) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] as string));
+    const rows = (items: any[], columns: { label: string; key: string }[]) => items.length
+      ? "<table><thead><tr>" + columns.map(c => "<th>" + escapeHtml(c.label) + "</th>").join("") + "</tr></thead><tbody>" + items.map(item => "<tr>" + columns.map(c => "<td>" + escapeHtml(item[c.key]) + "</td>").join("") + "</tr>").join("") + "</tbody></table>"
+      : "<p class='empty'>No records.</p>";
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>NEXUS Information Integrity Review</title><style>
+      body{font:13px/1.5 Arial,sans-serif;color:#172033;margin:32px}h1{font-size:24px;margin-bottom:4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #cbd5e1;padding-bottom:5px}.muted{color:#526176}.warning{padding:12px;border:1px solid #d97706;background:#fff7ed;margin:18px 0}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{border:1px solid #cbd5e1;padding:10px}.metric b{display:block;font-size:20px}table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}th,td{border:1px solid #cbd5e1;padding:6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#eef2f7}.empty{color:#64748b;font-style:italic}.foot{margin-top:28px;border-top:1px solid #cbd5e1;padding-top:10px;font-size:11px;color:#526176}@media print{body{margin:15mm}.warning{break-inside:avoid}h2{break-after:avoid}tr{break-inside:avoid}}
+      </style></head><body><h1>NEXUS — Information Integrity Review</h1><p class="muted">Generated ${escapeHtml(new Date().toLocaleString())}</p><div class="warning"><b>DEMO / ANALYST-ENTERED REPORT.</b> This report may contain sample and browser-local records. It is not a verified intelligence assessment.</div><h2>Executive summary</h2><div class="metrics"><div class="metric">Investigations<b>${data.cases.length}</b></div><div class="metric">Open cases<b>${openCases}</b></div><div class="metric">Sources<b>${data.sources.length}</b></div><div class="metric">Claims<b>${data.claims.length}</b></div><div class="metric">Media records<b>${data.media.length}</b></div><div class="metric">Response drafts<b>${data.responses.length}</b></div></div><h2>Investigations</h2>${rows(data.cases,[{label:"ID",key:"id"},{label:"Title",key:"title"},{label:"Status",key:"status"},{label:"Priority",key:"priority"},{label:"Description",key:"description"}])}<h2>Sources</h2>${rows(data.sources,[{label:"ID",key:"id"},{label:"Name",key:"name"},{label:"Type",key:"type"},{label:"Reliability",key:"reliability"},{label:"URL",key:"url"},{label:"Provenance notes",key:"provenance"}])}<h2>Claims and narratives</h2>${rows(data.claims,[{label:"ID",key:"id"},{label:"Topic",key:"topic"},{label:"Status",key:"status"},{label:"Claim",key:"text"},{label:"Analyst note",key:"summary"}])}<h2>Media review</h2>${rows(data.media,[{label:"ID",key:"id"},{label:"Filename",key:"filename"},{label:"Type",key:"type"},{label:"SHA-256",key:"hash"},{label:"Analysis note",key:"analysis"}])}<h2>Defensive responses</h2>${rows(data.responses,[{label:"ID",key:"id"},{label:"Title",key:"title"},{label:"Status",key:"status"},{label:"Text",key:"body"}])}<h2>Fictional simulations</h2>${rows(data.scenarios,[{label:"ID",key:"id"},{label:"Title",key:"title"},{label:"Status",key:"status"},{label:"Label",key:"label"}])}<div class="foot"><b>Method and limitations:</b> Records reflect this browser's current workspace state. Automated truth assessment, deepfake detection, and independent source verification are not performed by this prototype. A hash or metadata record alone does not prove authenticity. Internal approval does not mean content was published.</div><script>window.onload=()=>window.print();</script></body></html>`;
+    const popup = window.open("", "_blank");
+    if (!popup) { setNotice("Allow pop-ups for NEXUS to open the printable report."); return; }
+    popup.document.open(); popup.document.write(html); popup.document.close();
+    setNotice("Printable report opened. Choose Save as PDF in the print dialog.");
   }
 
   return <div className="space-y-5">
@@ -192,6 +242,6 @@ export function Workspace({ initialTab = "Overview" }: { initialTab?: Tab }) {
 
     {tab === "Simulation lab" && <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]"><Panel title="Create fictional scenario"><form onSubmit={addScenario} className="space-y-3"><Field label="Scenario title"><input className={inputClass} value={scenarioTitle} onChange={(e) => setScenarioTitle(e.target.value)} required placeholder="e.g. Synthetic emergency bulletin review" /></Field><button className={primaryClass}>Create scenario</button><p className="text-[11px] text-slate-500">Scenarios are fictional, clearly labelled and kept inside this workspace.</p></form></Panel><Panel title="Scenario register"><div className="space-y-3">{data.scenarios.map((item: any) => <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3"><div className="flex flex-wrap justify-between gap-2"><b className="text-sm">{item.title}</b><span className={badgeClass}>{item.status}</span></div><p className="mt-2 text-xs text-slate-400">{item.id} · Difficulty: {item.difficulty} · Analyst score: {item.analystScore ?? "Not evaluated"}</p><div className="mt-3 rounded border border-cyan-500/20 bg-cyan-500/5 p-2 text-[10px] font-semibold tracking-wider text-cyan-200">SYNTHETIC SCENARIO — NOT CONNECTED TO LIVE PLATFORMS</div></div>)}</div></Panel></div>}
 
-    {tab === "Reports" && <Panel title="Evidence-linked report export" action={<button className={primaryClass} onClick={exportReport}>Export report (.txt)</button>}><p className="text-sm text-slate-300">Generate a local report containing the current investigation, claim, source and response registers.</p><div className="mt-4 grid gap-3 sm:grid-cols-3">{[["Cases", data.cases.length], ["Claims", data.claims.length], ["Sources", data.sources.length]].map(([label, value]) => <div key={String(label)} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3"><p className="text-xs text-slate-400">{label}</p><p className="mt-1 text-2xl font-semibold">{value}</p></div>)}</div><p className="mt-4 text-xs text-slate-500">Reports are marked as demo material and should not be used as operational intelligence.</p></Panel>}
+    {tab === "Reports" && <div className="space-y-5"><Panel title="Report generator" action={<div className="flex flex-wrap gap-2"><button className={buttonClass} onClick={exportReport}>Export text</button><button className={primaryClass} onClick={printReport}>Print / Save as PDF</button></div>}><p className="text-sm leading-6 text-slate-300">Generate a report from the records currently loaded in this workspace. The report includes investigation, source, claim, media, response, and fictional simulation registers.</p><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{[["Investigations", data.cases.length], ["Open investigations", openCases], ["Sources", data.sources.length], ["Claims", data.claims.length], ["Media records", data.media.length], ["Response drafts", data.responses.length], ["Internally approved responses", approved], ["Fictional scenarios", data.scenarios.length]].map(([label, value]) => <div key={String(label)} className="rounded-lg border border-slate-800 bg-slate-950/60 p-3"><p className="text-xs text-slate-400">{label}</p><p className="mt-1 text-2xl font-semibold text-slate-100">{value}</p></div>)}</div></Panel><Panel title="Report contents"><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3"><b className="text-sm text-slate-100">Evidence registers</b><p className="mt-1 text-xs leading-5 text-slate-400">Case IDs and status, source URLs and provenance notes, claim wording and review status, media hashes and analysis notes.</p></div><div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3"><b className="text-sm text-slate-100">Response and simulation records</b><p className="mt-1 text-xs leading-5 text-slate-400">Internal defensive-response drafts and approval labels, plus clearly fictional simulation records.</p></div></div><p className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs leading-5 text-amber-100">Important limitation: this prototype uses browser-local data and sample records. It does not perform automated truth assessment, deepfake detection, or independent source verification. A media hash is not proof of authenticity, and internal approval does not mean a post was published.</p></Panel><Panel title="Report preview"><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-950 p-4 text-xs leading-5 text-slate-300">{buildReportText()}</pre></Panel></div>}
   </div>;
 }
