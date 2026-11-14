@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <AlertTriangle size={14} />
               <span className="text-xs font-medium uppercase tracking-[0.2em]">Threat Monitor</span>
             </div>
-            <p className="text-sm text-slate-300">3 high-priority narratives are under analyst review and evidence validation.</p>
+            <p className="text-sm text-slate-300">No live threat-monitoring feed is connected. Metrics appear only when records exist in this account.</p>
           </div>
         </aside>
 
